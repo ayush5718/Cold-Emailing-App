@@ -17,10 +17,15 @@ connectDB();
 // Middleware
 app.use(
   cors({
-    origin: "https://cold-emailing-app-b6hn.vercel.app", // Your frontend URL
+    origin: [
+      "https://cold-emailing-app-b6hn.vercel.app",
+      "https://cold-emailing-app.vercel.app",
+      process.env.FRONTEND_URL, // Backup from environment variable
+    ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
+    exposedHeaders: ["set-cookie"],
   })
 );
 app.use(express.json());

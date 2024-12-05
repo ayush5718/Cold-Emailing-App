@@ -10,7 +10,10 @@ export default defineConfig({
       "/api": {
         target: "https://cold-emailing-app-56ji.vercel.app",
         changeOrigin: true,
-        secure: false,
+        secure: true,
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+        },
       },
     },
   },
