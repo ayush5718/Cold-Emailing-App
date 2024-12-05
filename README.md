@@ -165,3 +165,49 @@ Give a ⭐️ if this project helped you!
 - Node.js version 14+ is recommended
 - Use a secure JWT secret in production
 - Configure email service properly for password reset functionality
+
+## Local Development Setup
+
+1. Clone the repository:
+```bash
+git clone [your-repo-url]
+cd Mern-auth
+```
+
+2. Install dependencies:
+```bash
+# Install server dependencies
+cd server
+npm install
+
+# Install client dependencies
+cd ../client
+npm install
+```
+
+3. Set up environment variables:
+
+Create `.env` file in the server directory:
+```env
+PORT=5000
+MONGODB_URI=your_mongodb_uri
+JWT_SECRET=your_jwt_secret
+NODE_ENV=development
+FRONTEND_URL=http://localhost:5173
+```
+
+4. Start the development servers:
+
+In the server directory:
+```bash
+npm run dev
+```
+
+In the client directory:
+```bash
+npm run dev
+```
+
+The application will be available at:
+- Frontend: http://localhost:5173
+- Backend: http://localhost:5000

@@ -1,6 +1,5 @@
 import axios from "axios";
-
-const API_URL = "https://cold-emailing-app-56ji.vercel.app/api/email";
+import { API_URL } from "../config/config";
 
 // Create axios instance with credentials
 const axiosInstance = axios.create({
@@ -33,14 +32,8 @@ const validateEmailConfig = async (senderEmail, appPassword) => {
     });
     return response.data;
   } catch (error) {
-    console.error(
-      "Email validation error:",
-      error.response?.data || error.message
-    );
-    throw (
-      error.response?.data || {
-        message: "Failed to validate email configuration",
-      }
+    throw new Error(
+      error.response?.data?.message || "Failed to validate email configuration"
     );
   }
 };
@@ -54,7 +47,7 @@ const sendBulkEmails = async ({
   attachments,
 }) => {
   try {
-    // Create FormData object
+    // Create FormData for file upload
     const formData = new FormData();
     formData.append("senderEmail", senderEmail);
     formData.append("appPassword", appPassword);
@@ -62,22 +55,15 @@ const sendBulkEmails = async ({
     formData.append("subject", subject);
     formData.append("content", content);
 
-    // Append attachments if any
+    // Append each file to FormData
     if (attachments && attachments.length > 0) {
       attachments.forEach((file) => {
         formData.append("attachments", file);
       });
     }
 
-    // Log formData contents (excluding sensitive data)
-    console.log("Sending email with:", {
-      senderEmail,
-      recipientsCount: recipients.length,
-      subject,
-      attachmentsCount: attachments?.length || 0,
-    });
-
-    const response = await axiosInstance.post("/send", formData, {
+    const response = await axios.post(`${API_URL}/send`, formData, {
+      withCredentials: true,
       headers: {
         "Content-Type": "multipart/form-data",
       },
@@ -85,11 +71,7 @@ const sendBulkEmails = async ({
 
     return response.data;
   } catch (error) {
-    console.error(
-      "Email sending error:",
-      error.response?.data || error.message
-    );
-    throw error.response?.data || { message: "Failed to send emails" };
+    throw new Error(error.response?.data?.message || "Failed to send emails");
   }
 };
 
