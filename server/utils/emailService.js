@@ -33,18 +33,24 @@ const createTransporter = async (senderEmail, appPassword) => {
 
 const validateEmailConfig = async (senderEmail, appPassword) => {
   try {
-    console.log("Validating email configuration for:", senderEmail);
-    const transporter = await createTransporter(senderEmail, appPassword);
-    return {
-      success: true,
-      message: "Email configuration is valid",
-    };
+    const transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false,
+      auth: {
+        user: senderEmail,
+        pass: appPassword,
+      },
+    });
+
+    // Verify the connection
+    await transporter.verify();
+    return { success: true, message: "Email configuration is valid" };
   } catch (error) {
     console.error("Email validation error:", error);
     return {
       success: false,
-      message: "Invalid email configuration",
-      error: error.message,
+      error: error.message || "Failed to validate email configuration",
     };
   }
 };
@@ -118,68 +124,50 @@ const sendBulkEmails = async ({
   content,
   attachments = [],
 }) => {
-  if (
-    !Array.isArray(recipients) ||
-    recipients.length === 0 ||
-    recipients.length > 20
-  ) {
-    throw new Error(
-      "Please provide between 1 and 20 recipient email addresses"
-    );
-  }
-
-  console.log(
-    `Attempting to send emails from ${senderEmail} to ${recipients.length} recipients`
-  );
-
   try {
-    const transporter = await createTransporter(senderEmail, appPassword);
-    const results = [];
-    let successCount = 0;
+    const transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false,
+      auth: {
+        user: senderEmail,
+        pass: appPassword,
+      },
+    });
 
-    for (const recipient of recipients) {
-      try {
-        const mailOptions = {
-          from: `"Cold Email App" <${senderEmail}>`,
-          to: recipient,
-          subject,
-          html: content,
-          attachments: attachments.map((file) => ({
-            filename: file.originalname,
-            path: file.path,
-          })),
-        };
+    // Send emails to each recipient
+    const results = await Promise.all(
+      recipients.map(async (recipient) => {
+        try {
+          await transporter.sendMail({
+            from: senderEmail,
+            to: recipient,
+            subject,
+            text: content,
+            attachments: attachments.map((file) => ({
+              filename: file.filename,
+              content: file.content,
+            })),
+          });
+          return { email: recipient, status: "success" };
+        } catch (error) {
+          console.error(`Failed to send email to ${recipient}:`, error);
+          return { email: recipient, status: "failed", error: error.message };
+        }
+      })
+    );
 
-        const info = await transporter.sendMail(mailOptions);
-        console.log(`Email sent successfully to ${recipient}:`, info.messageId);
-        results.push({
-          email: recipient,
-          status: "success",
-          messageId: info.messageId,
-        });
-        successCount++;
-
-        // Add a small delay between emails to avoid rate limiting
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-      } catch (error) {
-        console.error(`Failed to send email to ${recipient}:`, error);
-        results.push({
-          email: recipient,
-          status: "failed",
-          error: error.message,
-        });
-      }
-    }
+    const successful = results.filter((r) => r.status === "success").length;
+    const failed = results.filter((r) => r.status === "failed").length;
 
     return {
-      totalSent: recipients.length,
-      successful: successCount,
-      failed: recipients.length - successCount,
+      success: true,
+      message: `Sent ${successful} emails successfully, ${failed} failed`,
       details: results,
     };
   } catch (error) {
-    console.error("Bulk email sending failed:", error);
-    throw new Error(`Failed to send emails: ${error.message}`);
+    console.error("Bulk email sending error:", error);
+    throw new Error(error.message || "Failed to send emails");
   }
 };
 

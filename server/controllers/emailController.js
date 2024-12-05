@@ -1,19 +1,9 @@
 const { sendBulkEmails, validateEmailConfig } = require('../utils/emailService');
 const multer = require('multer');
-const path = require('path');
 
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, '../uploads'));
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + '-' + file.originalname);
-  }
-});
-
+// Use memory storage instead of disk storage
 const upload = multer({
-  storage: storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
 }).array('attachments', 5);
 
@@ -53,71 +43,31 @@ const sendEmails = async (req, res) => {
         });
       }
 
-      // Log the received form data
-      console.log('Received form data:', {
-        body: req.body,
-        files: req.files
-      });
+      const { senderEmail, appPassword, recipients, subject, content } = req.body;
+      
+      // Convert recipients string to array if needed
+      const recipientList = typeof recipients === 'string' ? JSON.parse(recipients) : recipients;
 
-      const { senderEmail, appPassword, recipients: recipientsJson, subject, content } = req.body;
+      // Process attachments from memory
+      const attachments = req.files ? req.files.map(file => ({
+        filename: file.originalname,
+        content: file.buffer // Use the buffer directly
+      })) : [];
 
-      // Parse recipients from JSON string
-      let recipients;
-      try {
-        recipients = JSON.parse(recipientsJson);
-      } catch (error) {
-        console.error('Error parsing recipients:', error);
-        return res.status(400).json({ 
-          message: 'Invalid recipients format' 
-        });
-      }
-
-      // Validate inputs
-      if (!senderEmail || !appPassword) {
-        return res.status(400).json({ 
-          message: 'Sender email and app password are required' 
-        });
-      }
-
-      if (!Array.isArray(recipients)) {
-        return res.status(400).json({ 
-          message: 'Recipients must be an array' 
-        });
-      }
-
-      // Filter out empty recipients
-      recipients = recipients.filter(email => email && email.trim());
-
-      if (recipients.length === 0 || recipients.length > 20) {
-        return res.status(400).json({ 
-          message: 'Please provide between 1 and 20 recipient email addresses' 
-        });
-      }
-
-      if (!subject || !content) {
-        return res.status(400).json({ 
-          message: 'Subject and content are required' 
-        });
-      }
-
-      // Send emails
       const result = await sendBulkEmails({
         senderEmail,
         appPassword,
-        recipients,
+        recipients: recipientList,
         subject,
         content,
-        attachments: req.files || []
+        attachments
       });
 
-      res.json({
-        message: 'Bulk email sending completed',
-        result
-      });
+      res.json(result);
     } catch (error) {
       console.error('Error in sendEmails:', error);
       res.status(500).json({
-        message: 'Failed to send emails',
+        message: 'Unknown error',
         error: error.message
       });
     }
