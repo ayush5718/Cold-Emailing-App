@@ -9,7 +9,6 @@ const fs = require("fs");
 const cookieParser = require("cookie-parser");
 dotenv.config();
 const app = express();
-app.use(cookieParser());
 
 // Connect to MongoDB
 connectDB();
@@ -20,14 +19,22 @@ app.use(
     origin: [
       "https://cold-emailing-app-b6hn.vercel.app",
       "https://cold-emailing-app.vercel.app",
-      process.env.FRONTEND_URL, // Backup from environment variable
+      process.env.FRONTEND_URL,
+      // Allow localhost for development
+      "http://localhost:5173",
+      "http://localhost:3000"
     ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
-    exposedHeaders: ["set-cookie"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    exposedHeaders: ["set-cookie"]
   })
 );
+
+// Cookie parser middleware
+app.use(cookieParser());
+
+// Body parser middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

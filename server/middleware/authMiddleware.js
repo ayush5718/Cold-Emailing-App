@@ -5,10 +5,15 @@ const asyncHandler = require('express-async-handler');
 const protect = asyncHandler(async (req, res, next) => {
   let token;
 
-  // Get token from cookie
+  // Check for token in cookies first
   token = req.cookies.jwt;
 
-  // If no token
+  // If no cookie token, check Authorization header
+  if (!token && req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+    token = req.headers.authorization.split(' ')[1];
+  }
+
+  // If no token found in either place
   if (!token) {
     return res.status(401).json({ 
       success: false, 

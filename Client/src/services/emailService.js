@@ -2,9 +2,13 @@ import axios from "axios";
 
 const API_URL = "https://cold-emailing-app-56ji.vercel.app/api/email";
 
-// Create axios instance with auth header
+// Create axios instance with credentials
 const axiosInstance = axios.create({
   baseURL: API_URL,
+  withCredentials: true, // This is important for cookies
+  headers: {
+    'Content-Type': 'application/json',
+  }
 });
 
 // Add auth token to requests
@@ -23,16 +27,10 @@ axiosInstance.interceptors.request.use(
 
 const validateEmailConfig = async (senderEmail, appPassword) => {
   try {
-    const response = await axiosInstance.post(
-      "/validate",
-      {
-        senderEmail,
-        appPassword,
-      },
-      {
-        withCredentials: true,
-      }
-    );
+    const response = await axiosInstance.post("/validate", {
+      senderEmail,
+      appPassword,
+    });
     return response.data;
   } catch (error) {
     console.error(
@@ -83,7 +81,6 @@ const sendBulkEmails = async ({
       headers: {
         "Content-Type": "multipart/form-data",
       },
-      withCredentials: true,
     });
 
     return response.data;
