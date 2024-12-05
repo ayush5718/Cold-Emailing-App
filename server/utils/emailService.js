@@ -1,14 +1,14 @@
-const nodemailer = require('nodemailer');
+const nodemailer = require("nodemailer");
 
 // Create reusable transporter
 const createTransporter = async (senderEmail, appPassword) => {
   if (!senderEmail || !appPassword) {
-    throw new Error('Sender email and app password are required');
+    throw new Error("Sender email and app password are required");
   }
 
   const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    host: 'smtp.gmail.com',
+    service: "gmail",
+    host: "smtp.gmail.com",
     port: 587,
     secure: false,
     auth: {
@@ -16,43 +16,46 @@ const createTransporter = async (senderEmail, appPassword) => {
       pass: appPassword,
     },
     tls: {
-      rejectUnauthorized: false
-    }
+      rejectUnauthorized: false,
+    },
   });
 
   // Verify the connection configuration
   try {
     await transporter.verify();
-    console.log('SMTP connection verified successfully');
+    console.log("SMTP connection verified successfully");
     return transporter;
   } catch (error) {
-    console.error('SMTP connection verification failed:', error);
-    throw new Error('Failed to connect to email server: ' + error.message);
+    console.error("SMTP connection verification failed:", error);
+    throw new Error("Failed to connect to email server: " + error.message);
   }
 };
 
 const validateEmailConfig = async (senderEmail, appPassword) => {
   try {
-    console.log('Validating email configuration for:', senderEmail);
+    console.log("Validating email configuration for:", senderEmail);
     const transporter = await createTransporter(senderEmail, appPassword);
     return {
       success: true,
-      message: 'Email configuration is valid'
+      message: "Email configuration is valid",
     };
   } catch (error) {
-    console.error('Email validation error:', error);
+    console.error("Email validation error:", error);
     return {
       success: false,
-      message: 'Invalid email configuration',
-      error: error.message
+      message: "Invalid email configuration",
+      error: error.message,
     };
   }
 };
 
 const sendOTPEmail = async (email, token) => {
   try {
-    const transporter = await createTransporter(process.env.MAIL_USER, process.env.MAIL_PASS);
-    
+    const transporter = await createTransporter(
+      process.env.MAIL_USER,
+      process.env.MAIL_PASS
+    );
+
     const html = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
         <div style="background: linear-gradient(135deg, #4F46E5, #06B6D4); color: white; padding: 30px 20px; text-align: center; border-radius: 10px 10px 0 0;">
@@ -99,21 +102,36 @@ const sendOTPEmail = async (email, token) => {
       html: html,
     });
 
-    console.log('Password reset email sent successfully:', info.messageId);
+    console.log("Password reset email sent successfully:", info.messageId);
     return { success: true, messageId: info.messageId };
   } catch (error) {
-    console.error('Failed to send password reset email:', error);
+    console.error("Failed to send password reset email:", error);
     throw error;
   }
 };
 
-const sendBulkEmails = async ({ senderEmail, appPassword, recipients, subject, content, attachments = [] }) => {
-  if (!Array.isArray(recipients) || recipients.length === 0 || recipients.length > 20) {
-    throw new Error('Please provide between 1 and 20 recipient email addresses');
+const sendBulkEmails = async ({
+  senderEmail,
+  appPassword,
+  recipients,
+  subject,
+  content,
+  attachments = [],
+}) => {
+  if (
+    !Array.isArray(recipients) ||
+    recipients.length === 0 ||
+    recipients.length > 20
+  ) {
+    throw new Error(
+      "Please provide between 1 and 20 recipient email addresses"
+    );
   }
 
-  console.log(`Attempting to send emails from ${senderEmail} to ${recipients.length} recipients`);
-  
+  console.log(
+    `Attempting to send emails from ${senderEmail} to ${recipients.length} recipients`
+  );
+
   try {
     const transporter = await createTransporter(senderEmail, appPassword);
     const results = [];
@@ -126,25 +144,29 @@ const sendBulkEmails = async ({ senderEmail, appPassword, recipients, subject, c
           to: recipient,
           subject,
           html: content,
-          attachments: attachments.map(file => ({
+          attachments: attachments.map((file) => ({
             filename: file.originalname,
-            path: file.path
-          }))
+            path: file.path,
+          })),
         };
 
         const info = await transporter.sendMail(mailOptions);
         console.log(`Email sent successfully to ${recipient}:`, info.messageId);
-        results.push({ email: recipient, status: 'success', messageId: info.messageId });
+        results.push({
+          email: recipient,
+          status: "success",
+          messageId: info.messageId,
+        });
         successCount++;
 
         // Add a small delay between emails to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       } catch (error) {
         console.error(`Failed to send email to ${recipient}:`, error);
         results.push({
           email: recipient,
-          status: 'failed',
-          error: error.message
+          status: "failed",
+          error: error.message,
         });
       }
     }
@@ -153,18 +175,21 @@ const sendBulkEmails = async ({ senderEmail, appPassword, recipients, subject, c
       totalSent: recipients.length,
       successful: successCount,
       failed: recipients.length - successCount,
-      details: results
+      details: results,
     };
   } catch (error) {
-    console.error('Bulk email sending failed:', error);
+    console.error("Bulk email sending failed:", error);
     throw new Error(`Failed to send emails: ${error.message}`);
   }
 };
 
 const sendWelcomeEmail = async (email, name) => {
   try {
-    const transporter = await createTransporter(process.env.MAIL_USER, process.env.MAIL_PASS);
-    
+    const transporter = await createTransporter(
+      process.env.MAIL_USER,
+      process.env.MAIL_PASS
+    );
+
     const html = `
       <!DOCTYPE html>
       <html>
@@ -258,7 +283,7 @@ const sendWelcomeEmail = async (email, name) => {
             </ol>
 
             <center>
-              <a href="http://localhost:5173/dashboard" class="button">
+              <a href="https://cold-emailing-app-b6hn.vercel.app/dashboard" class="button">
                 Start Sending Emails
               </a>
             </center>
@@ -280,10 +305,10 @@ const sendWelcomeEmail = async (email, name) => {
       html: html,
     });
 
-    console.log('Welcome email sent successfully:', info.messageId);
+    console.log("Welcome email sent successfully:", info.messageId);
     return { success: true, messageId: info.messageId };
   } catch (error) {
-    console.error('Welcome email sending failed:', error);
+    console.error("Welcome email sending failed:", error);
     throw error;
   }
 };
@@ -292,5 +317,5 @@ module.exports = {
   validateEmailConfig,
   sendOTPEmail,
   sendBulkEmails,
-  sendWelcomeEmail
+  sendWelcomeEmail,
 };
