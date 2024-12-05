@@ -1,13 +1,13 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import { logout } from './authSlice';
+import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { logout } from "./authSlice";
 
 const baseQuery = fetchBaseQuery({
-  baseUrl: 'http://localhost:5000/api/auth',
-  credentials: 'include',
+  baseUrl: "https://cold-emailing-app-56ji.vercel.app/api/auth",
+  credentials: "include",
   prepareHeaders: (headers, { getState }) => {
     const token = getState().auth.token;
     if (token) {
-      headers.set('authorization', `Bearer ${token}`);
+      headers.set("authorization", `Bearer ${token}`);
     }
     return headers;
   },
@@ -22,7 +22,7 @@ const baseQueryWithReauth = async (args, api, extraOptions) => {
     }
     result.error = {
       status: result.error.status,
-      message: result.error.data?.error || 'An error occurred'
+      message: result.error.data?.error || "An error occurred",
     };
   }
 
@@ -31,46 +31,46 @@ const baseQueryWithReauth = async (args, api, extraOptions) => {
 
 export const apiSlice = createApi({
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['User'],
+  tagTypes: ["User"],
   endpoints: (builder) => ({
     login: builder.mutation({
       query: (data) => ({
-        url: '/login',
-        method: 'POST',
+        url: "/login",
+        method: "POST",
         body: data,
       }),
     }),
     register: builder.mutation({
       query: (data) => ({
-        url: '/register',
-        method: 'POST',
+        url: "/register",
+        method: "POST",
         body: data,
       }),
     }),
     logout: builder.mutation({
       query: () => ({
-        url: '/logout',
-        method: 'POST',
+        url: "/logout",
+        method: "POST",
       }),
     }),
     verifyOTP: builder.mutation({
       query: (data) => ({
-        url: '/verify-otp',
-        method: 'POST',
+        url: "/verify-otp",
+        method: "POST",
         body: data,
       }),
     }),
     forgotPassword: builder.mutation({
       query: (data) => ({
-        url: '/forgot-password',
-        method: 'POST',
+        url: "/forgot-password",
+        method: "POST",
         body: data,
       }),
     }),
     resetPassword: builder.mutation({
       query: ({ token, password }) => ({
         url: `/reset-password/${token}`,
-        method: 'POST',
+        method: "POST",
         body: { password },
       }),
     }),

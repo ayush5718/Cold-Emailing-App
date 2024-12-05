@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:5000/api/email";
+const API_URL = "https://cold-emailing-app-56ji.vercel.app/api/email";
 
 // Create axios instance with auth header
 const axiosInstance = axios.create({
